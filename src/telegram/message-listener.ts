@@ -2,8 +2,15 @@ import { Context } from 'telegraf';
 
 import { getHaiku } from '../utils/haiku';
 import { generateImage } from '../utils/generate-image';
+import mainLogger from '../logger';
 
-export default async (context: Context): Promise<void> => {
+export default async (context: Context, next: () => Promise<void>): Promise<void> => {
+	const logger = mainLogger.child({
+		updateId: context.update.update_id,
+	});
+
+	logger.verbose('Started processing');
+
 	const mc = context.update[context.updateType];
 	const { text, caption, entities } = mc;
 
@@ -15,7 +22,10 @@ export default async (context: Context): Promise<void> => {
 		return;
 	}
 
-	const { image } = await generateImage({
+	logger.verbose('Generating image...');
+
+	const image = await generateImage({
+		logger,
 		message: {
 			entities,
 			avatar: true,
@@ -28,9 +38,15 @@ export default async (context: Context): Promise<void> => {
 		scale: 2,
 	});
 
+	logger.verbose('Replying with generated sticker');
+
 	await context.replyWithSticker({
 		source: image,
 	}, {
 		reply_to_message_id: mc.message_id
 	});
+
+	logger.verbose('Finished processing');
+
+	await next();
 };

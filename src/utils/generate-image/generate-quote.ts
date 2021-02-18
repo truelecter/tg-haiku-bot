@@ -2,6 +2,8 @@ import { Canvas, createCanvas, Image } from 'canvas';
 import runes from 'runes';
 import LRU from 'lru-cache';
 
+import { ILogger } from '../../logger';
+
 import loadCanvasImage from './load-canvas-image';
 import { drawRoundRect, drawMultilineText, drawAvatar } from './drawing-utils';
 import { isLight, getUserColor, getUserAvatarColor } from './color-utils';
@@ -161,18 +163,20 @@ const drawQuote = async (
 interface GenerateQuoteParams {
 	backgroundColor: string;
 	message: Message;
-	rawWidth?: number;
-	rawHeight?: number;
-	rawScale?: number;
+	width?: number;
+	height?: number;
+	scale?: number;
+	logger: ILogger;
 }
 
 export default async (
 	{
 		backgroundColor,
 		message,
-		rawWidth = 512,
-		rawHeight = 512,
-		rawScale = 2
+		width: rawWidth = 512,
+		height: rawHeight = 512,
+		scale: rawScale = 2,
+		logger,
 	}: GenerateQuoteParams,
 ): Promise<Canvas> => {
 	if (rawScale <= 0) {
@@ -186,6 +190,7 @@ export default async (
 
 	let nameCanvas: Canvas | undefined;
 	if (message.from) {
+		logger.verbose('Started drawing name');
 		const nameColor = getUserColor(message.chatId ?? 1, isBackgroundLight);
 		const nameSize = 22 * scale;
 
@@ -211,10 +216,12 @@ export default async (
 			maxWidth: width,
 			maxHeight: nameSize
 		});
+		logger.verbose('Finished drawing name');
 	}
 
 	let textCanvas: Canvas | undefined;
 	if (message.text) {
+		logger.verbose('Started drawing message');
 		const fontSize = 24 * scale;
 		const textColor = isBackgroundLight
 			? '#000'
@@ -230,12 +237,16 @@ export default async (
 			maxWidth: width,
 			maxHeight: height - fontSize
 		});
+		logger.verbose('Finished drawing message');
 	}
 
 	let avatarCanvas: Canvas | undefined;
 	if (message.avatar) {
+		logger.verbose('Started drawing avatar');
 		const avatarImage = await getUserAvatarImage(message.from);
+		logger.verbose('Received avatar image');
 		avatarCanvas = await drawAvatar(avatarImage);
+		logger.verbose('Finished drawing avatar');
 	}
 
 	return drawQuote(

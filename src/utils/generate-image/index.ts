@@ -1,12 +1,13 @@
-import { createCanvas } from 'canvas';
 import sharp from 'sharp';
 
+import { ILogger } from '../../logger';
+
 import generateQuote from './generate-quote';
-import loadCanvasImage from './load-canvas-image';
 import { normalizeColor } from './color-utils';
 import { Message } from './common-types';
 
 export interface IImageGeneratorParams {
+	logger: ILogger;
 	message: Message;
 	backgroundColor?: string;
 	width?: number;
@@ -14,57 +15,44 @@ export interface IImageGeneratorParams {
 	scale?: number;
 }
 
-export type ImageGenerationResult = {
-	image: Buffer;
-	width: number;
-	height: number;
-};
+export const generateImage = async (param: IImageGeneratorParams): Promise<Buffer> => {
+	const {
+		logger,
+		message,
+		backgroundColor: rawBackground,
+		height,
+		scale,
+		width,
+	} = param;
 
-export const generateImage = async (parm: IImageGeneratorParams): Promise<ImageGenerationResult> => {
-	const backgroundColor = normalizeColor(parm.backgroundColor);
+	const backgroundColor = normalizeColor(rawBackground);
+
+	logger.verbose('Started generating quote');
 
 	const canvasQuote = await generateQuote({
 		backgroundColor,
-		message: parm.message,
-		rawWidth: parm.width,
-		rawHeight: parm.height,
-		rawScale: parm.scale
+		message,
+		width,
+		height,
+		scale,
+		logger,
 	});
 
-	const downPadding = 75;
 	const maxWidth = 512;
 	const maxHeight = 512;
 
 	const imageQuoteSharp = sharp(canvasQuote.toBuffer());
+	const { height: canvasHeight, width: canvasWidth } = canvasQuote;
 
-	if (canvasQuote.height > canvasQuote.width) {
+	if (canvasHeight > maxHeight) {
+		logger.verbose(`Canvas height ${canvasWidth} exceeds limit of ${maxHeight}. Resizing...`);
 		imageQuoteSharp.resize({ height: maxHeight });
-	} else {
+	}
+
+	if (canvasWidth > maxWidth) {
+		logger.verbose(`Canvas width ${canvasWidth} exceeds limit of ${maxHeight}. Resizing...`);
 		imageQuoteSharp.resize({ width: maxWidth });
 	}
 
-	const canvasImage = await loadCanvasImage(await imageQuoteSharp.toBuffer());
-
-	const canvasPadding = createCanvas(canvasImage.width, canvasImage.height + downPadding);
-	const canvasPaddingCtx = canvasPadding.getContext('2d');
-
-	canvasPaddingCtx.drawImage(canvasImage, 0, 0);
-
-	const imageSharp = sharp(canvasPadding.toBuffer());
-
-	if (canvasPadding.height >= canvasPadding.width) {
-		imageSharp.resize({ height: maxHeight });
-	} else {
-		imageSharp.resize({ width: maxWidth });
-	}
-
-	const image = await imageSharp.webp({ lossless: true, force: true }).toBuffer();
-
-	const { width, height } = await sharp(image).metadata();
-
-	return {
-		image,
-		width,
-		height
-	};
+	return imageQuoteSharp.webp({ lossless: true, force: true }).toBuffer();
 };
