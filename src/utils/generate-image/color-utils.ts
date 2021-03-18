@@ -83,7 +83,7 @@ const userColorPalettes = [
 const nameMap = [0, 7, 4, 1, 6, 3, 5];
 
 const getUserPaletteById = (userId: number): Palette => {
-	const nameIndex = Math.max(0, Math.min(Math.floor(userId), 7));
+	const nameIndex = Math.max(0, Math.min(Math.floor(userId), nameMap.length - 1));
 	const nameColorIndex = nameMap[nameIndex];
 
 	return userColorPalettes[nameColorIndex];
