@@ -30,6 +30,10 @@ export const getHaiku = (text: string | null): string | null => {
 	let paragraph = 0;
 
 	for (const word of words) {
+		if (paragraph > 2) {
+			return null;
+		}
+
 		haiku[paragraph].push(word);
 
 		const paragraphSyllableCount = syllableCount(haiku[paragraph].join(' '));
