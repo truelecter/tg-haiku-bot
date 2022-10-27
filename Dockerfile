@@ -1,4 +1,4 @@
-FROM node:lts-buster-slim
+FROM node:14.20.1-slim
 
 COPY . /opt/tg-haiku-bot/
 WORKDIR /opt/tg-haiku-bot/
