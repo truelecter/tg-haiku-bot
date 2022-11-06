@@ -9,7 +9,17 @@ RUN npm install canvas@2.10.1 \
 	&& npm install \
 	&& npm run build \
   && chown -R 1000:1000 /opt/tg-haiku-bot/ \
-	&& rm -rf /usr/local/share/.cache /tmp/*
+	&& apt update && apt -y install curl fontconfig p7zip-full \
+	&& cd /tmp/ \
+	&& curl -O https://devimages-cdn.apple.com/design/resources/download/SF-Pro.dmg \
+	&& 7z x SF-Pro.dmg \
+	&& cd SFProFonts \
+	&& 7z x 'SF Pro Fonts.pkg' \
+	&& 7z x 'Payload~' \
+	&& mkdir -p /usr/share/fonts/opentype \
+	&& mv Library/Fonts/* /usr/share/fonts/opentype \
+	&& rm -rf /usr/local/share/.cache /tmp/* \
+	&& fc-cache -f -v
 
 USER 1000:1000
 
