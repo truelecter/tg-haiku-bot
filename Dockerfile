@@ -8,7 +8,7 @@ ENV NODE_ENV=prod
 RUN npm install canvas@2.10.1 \
 	&& npm install \
 	&& npm run build \
-  && chown -R 1000:1000 /opt/tg-haiku-bot/ \
+	&& chown -R 1000:1000 /opt/tg-haiku-bot/ \
 	&& apt update && apt -y install curl fontconfig p7zip-full \
 	&& cd /tmp/ \
 	&& curl -O https://devimages-cdn.apple.com/design/resources/download/SF-Pro.dmg \

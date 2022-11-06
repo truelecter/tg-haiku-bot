@@ -176,7 +176,11 @@ export const drawMultilineText = async ({
 			}
 
 			for (let charIndex = entity.offset; charIndex < entity.offset + entity.length; charIndex++) {
-				styledChar[charIndex].style = styledChar[charIndex].style.concat(style);
+				try {
+					styledChar[charIndex - 1].style = styledChar[charIndex - 1].style.concat(style);
+				} finally {
+					// Ignore
+				}
 			}
 		}
 	}
